@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,7 @@
     <title>Swarm Peer Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Дополнительные стили при необходимости */
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -31,71 +32,104 @@
 
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg w-full max-w-2xl">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
         <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Swarm Coordinator - Peer Dashboard</h1>
 
         <div class="mb-4">
-            <label for="peerIdInput" class="block text-sm font-medium text-gray-700 mb-1">Enter Peer ID:</label>
+            <label for="peerIdInput" class="block text-sm font-medium text-gray-700 mb-1">Введите Peer ID:</label>
             <input type="text" id="peerIdInput"
                 class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., QmZ8DmjwU9y5QWsS8exSttZHhFbChMN7KeLgVu4fCGzRo1">
+                placeholder="Например, QmZ8DmjwU9y5QWsS8exSttZHhFbChMN7KeLgVu4fCGzRo1">
         </div>
 
         <button id="fetchDataBtn"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-150 ease-in-out mb-6">
-            Fetch Data
-        </button>
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-150 ease-in-out mb-6">Получить
+            данные</button>
 
         <div id="loading" class="text-center mb-4 hidden">
             <div id="loading-spinner"
                 class="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-            <span class="ml-2 text-gray-600">Loading data...</span>
+            <span class="ml-2 text-gray-600">Загрузка данных...</span>
         </div>
 
-        <div id="errorDisplay" class="text-red-600 text-center mb-4 hidden p-3 bg-red-50 rounded-md"></div>
+        <div id="errorDisplay" class="text-red-600 text-center mb-4 hidden"></div>
 
         <div id="dataDisplay" class="space-y-3 hidden">
-            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Information for Peer ID: <span
-                    id="displayPeerId" class="font-mono text-sm break-all"></span></h2>
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2">Информация по Peer ID: <span
+                    id="displayPeerId" class="font-mono text-sm"></span></h2>
             <div class="p-3 bg-gray-50 rounded-md">
-                <p class="text-sm text-gray-600">Associated EOA Address:</p>
+                <p class="text-sm text-gray-600">Связанный Адрес EOA:</p>
                 <p id="eoaAddress" class="font-mono text-gray-900 text-sm break-all">-</p>
             </div>
             <div class="p-3 bg-gray-50 rounded-md">
-                <p class="text-sm text-gray-600">Total Wins:</p>
+                <p class="text-sm text-gray-600">Всего Побед (Wins):</p>
                 <p id="totalWins" class="font-semibold text-gray-900 text-lg">-</p>
             </div>
             <div class="p-3 bg-gray-50 rounded-md">
-                <p class="text-sm text-gray-600">Winner Leaderboard Rank:</p>
-                <p id="leaderboardRank" class="font-semibold text-gray-900 text-lg">-</p>
-            </div>
-            <div class="p-3 bg-gray-50 rounded-md">
-                <p class="text-sm text-gray-600">Current Network Round:</p>
+                <p class="text-sm text-gray-600">Текущий Раунд Сети:</p>
                 <p id="currentRound" class="font-semibold text-gray-900 text-lg">-</p>
             </div>
             <div class="p-3 bg-gray-50 rounded-md">
-                <p class="text-sm text-gray-600">Votes Received in Current Round:</p>
+                <p class="text-sm text-gray-600">Голосов получено в текущем раунде:</p>
                 <p id="roundVotes" class="font-semibold text-gray-900 text-lg">-</p>
             </div>
             <div class="p-3 bg-gray-50 rounded-md">
-                <p class="text-sm text-gray-600">Total Votes Cast by Associated EOA:</p>
-                <p id="eoaVoteCount" class="font-semibold text-gray-900 text-lg">-</p>
-            </div>
-            <div class="p-3 bg-gray-50 rounded-md">
-                <p class="text-sm text-gray-600">Total Unique Peers Voted On (Network):</p>
+                <p class="text-sm text-gray-600">Всего уникальных пиров, получивших голоса:</p>
                 <p id="uniquePeers" class="font-semibold text-gray-900 text-lg">-</p>
             </div>
         </div>
     </div>
 
     <script>
-        // === Configuration ===
-        const RPC_URL = "https://gensyn-testnet.g.alchemy.com/public"; // Your RPC URL
-        const CONTRACT_ADDRESS = "0x2fC68a233EF9E9509f034DD551FF90A79a0B8F82"; // SwarmCoordinator PROXY Address
-        // ABI Fragment for necessary view functions
-        const CONTRACT_ABI = [{ "inputs": [{ "internalType": "address", "name": "target", "type": "address" }], "name": "AddressEmptyCode", "type": "error" }, { "inputs": [{ "internalType": "address", "name": "implementation", "type": "address" }], "name": "ERC1967InvalidImplementation", "type": "error" }, { "inputs": [], "name": "ERC1967NonPayable", "type": "error" }, { "inputs": [], "name": "EoaAlreadyHasPeerId", "type": "error" }, { "inputs": [], "name": "FailedCall", "type": "error" }, { "inputs": [], "name": "InvalidBootnodeIndex", "type": "error" }, { "inputs": [], "name": "InvalidInitialization", "type": "error" }, { "inputs": [], "name": "InvalidPeerId", "type": "error" }, { "inputs": [], "name": "InvalidRoundNumber", "type": "error" }, { "inputs": [], "name": "NotInitializing", "type": "error" }, { "inputs": [], "name": "OnlyBootnodeManager", "type": "error" }, { "inputs": [], "name": "OnlyOwner", "type": "error" }, { "inputs": [], "name": "OnlyStageManager", "type": "error" }, { "inputs": [], "name": "PeerIdAlreadyRegistered", "type": "error" }, { "inputs": [], "name": "StageOutOfBounds", "type": "error" }, { "inputs": [], "name": "UUPSUnauthorizedCallContext", "type": "error" }, { "inputs": [{ "internalType": "bytes32", "name": "slot", "type": "bytes32" }], "name": "UUPSUnsupportedProxiableUUID", "type": "error" }, { "inputs": [], "name": "WinnerAlreadyVoted", "type": "error" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "manager", "type": "address" }], "name": "AllBootnodesCleared", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "manager", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "index", "type": "uint256" }], "name": "BootnodeRemoved", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "manager", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "count", "type": "uint256" }], "name": "BootnodesAdded", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint64", "name": "version", "type": "uint64" }], "name": "Initialized", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "eoa", "type": "address" }, { "indexed": false, "internalType": "string", "name": "peerId", "type": "string" }], "name": "PeerRegistered", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" }, { "indexed": true, "internalType": "address", "name": "account", "type": "address" }, { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }], "name": "RoleGranted", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" }, { "indexed": true, "internalType": "address", "name": "account", "type": "address" }, { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }], "name": "RoleRevoked", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "newRoundNumber", "type": "uint256" }], "name": "RoundAdvanced", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "roundNumber", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "newStage", "type": "uint256" }], "name": "StageAdvanced", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "implementation", "type": "address" }], "name": "Upgraded", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "voter", "type": "address" }, { "indexed": true, "internalType": "uint256", "name": "roundNumber", "type": "uint256" }, { "indexed": false, "internalType": "string[]", "name": "winners", "type": "string[]" }], "name": "WinnerSubmitted", "type": "event" }, { "inputs": [], "name": "BOOTNODE_MANAGER_ROLE", "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "OWNER_ROLE", "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "STAGE_MANAGER_ROLE", "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "UPGRADE_INTERFACE_VERSION", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string[]", "name": "newBootnodes", "type": "string[]" }], "name": "addBootnodes", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "clearBootnodes", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "currentRound", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "currentStage", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getBootnodes", "outputs": [{ "internalType": "string[]", "name": "", "type": "string[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getBootnodesCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string[]", "name": "peerIds", "type": "string[]" }], "name": "getEoa", "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "eoas", "type": "address[]" }], "name": "getPeerId", "outputs": [{ "internalType": "string[]", "name": "", "type": "string[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "roundNumber", "type": "uint256" }, { "internalType": "string", "name": "peerId", "type": "string" }], "name": "getPeerVoteCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "peerId", "type": "string" }], "name": "getTotalWins", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "voter", "type": "address" }], "name": "getVoterVoteCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "roundNumber", "type": "uint256" }, { "internalType": "address", "name": "voter", "type": "address" }], "name": "getVoterVotes", "outputs": [{ "internalType": "string[]", "name": "", "type": "string[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "bytes32", "name": "role", "type": "bytes32" }, { "internalType": "address", "name": "account", "type": "address" }], "name": "grantRole", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "bytes32", "name": "role", "type": "bytes32" }, { "internalType": "address", "name": "account", "type": "address" }], "name": "hasRole", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "owner_", "type": "address" }], "name": "initialize", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "proxiableUUID", "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "string", "name": "peerId", "type": "string" }], "name": "registerPeer", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "index", "type": "uint256" }], "name": "removeBootnode", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "bytes32", "name": "role", "type": "bytes32" }, { "internalType": "address", "name": "account", "type": "address" }], "name": "revokeRole", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "stageCount_", "type": "uint256" }], "name": "setStageCount", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "stageCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "roundNumber", "type": "uint256" }, { "internalType": "string[]", "name": "winners", "type": "string[]" }], "name": "submitWinners", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "uniqueVotedPeers", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "uniqueVoters", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "updateStageAndRound", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "newImplementation", "type": "address" }, { "internalType": "bytes", "name": "data", "type": "bytes" }], "name": "upgradeToAndCall", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "start", "type": "uint256" }, { "internalType": "uint256", "name": "end", "type": "uint256" }], "name": "voterLeaderboard", "outputs": [{ "internalType": "address[]", "name": "voters", "type": "address[]" }, { "internalType": "uint256[]", "name": "voteCounts", "type": "uint256[]" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "uint256", "name": "start", "type": "uint256" }, { "internalType": "uint256", "name": "end", "type": "uint256" }], "name": "winnerLeaderboard", "outputs": [{ "internalType": "string[]", "name": "peerIds", "type": "string[]" }, { "internalType": "uint256[]", "name": "wins", "type": "uint256[]" }], "stateMutability": "view", "type": "function" }];
+        // === Конфигурация ===
+        const RPC_URL = "https://gensyn-testnet.g.alchemy.com/public"; // Ваш RPC URL
+        // Выберите нужный вам контракт:
+        const CONTRACT_ADDRESS = "0x69C6e1D608ec64885E7b185d39b04B491a71768C"; // SMALL_SWARM_CONTRACT
+        // const CONTRACT_ADDRESS = "0x6947c6E196a48B77eFa9331EC1E3e45f3Ee5Fd58";   // BIG_SWARM_CONTRACT
 
-        // === DOM Elements ===
+        // ABI только нужных view-функций из SwarmCoordinator v0.4.2
+        const CONTRACT_ABI = [
+            {
+                "type": "function",
+                "name": "getEoa",
+                "inputs": [{ "name": "peerIds", "type": "string[]" }],
+                "outputs": [{ "name": "", "type": "address[]" }],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "getTotalWins",
+                "inputs": [{ "name": "peerId", "type": "string" }],
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "currentRound",
+                "inputs": [],
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "getPeerVoteCount",
+                "inputs": [
+                    { "name": "roundNumber", "type": "uint256" },
+                    { "name": "peerId", "type": "string" }
+                ],
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "stateMutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "uniqueVotedPeers",
+                "inputs": [],
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "stateMutability": "view"
+            }
+        ];
+
+        // === Элементы DOM ===
         const peerIdInput = document.getElementById('peerIdInput');
         const fetchDataBtn = document.getElementById('fetchDataBtn');
         const dataDisplay = document.getElementById('dataDisplay');
@@ -105,207 +139,88 @@
         const displayPeerIdEl = document.getElementById('displayPeerId');
         const eoaAddressEl = document.getElementById('eoaAddress');
         const totalWinsEl = document.getElementById('totalWins');
-        const leaderboardRankEl = document.getElementById('leaderboardRank'); // New
         const currentRoundEl = document.getElementById('currentRound');
         const roundVotesEl = document.getElementById('roundVotes');
-        const eoaVoteCountEl = document.getElementById('eoaVoteCount'); // New
         const uniquePeersEl = document.getElementById('uniquePeers');
 
-        // === Logic ===
-        let provider;
-        let contract;
-
-        // Initialize ethers provider and contract
+        let provider, contract;
         try {
             provider = new ethers.JsonRpcProvider(RPC_URL);
-            const checkedAddress = ethers.getAddress(CONTRACT_ADDRESS); // Validate/checksum address
+            const checkedAddress = ethers.getAddress(CONTRACT_ADDRESS);
             contract = new ethers.Contract(checkedAddress, CONTRACT_ABI, provider);
-            console.log("Provider and Contract initialized successfully.");
-            console.log("Contract Address:", checkedAddress);
-            console.log("RPC URL:", RPC_URL);
+            console.log("Ethers.js initialized successfully.");
         } catch (err) {
             console.error("Initialization error:", err);
-            showError(`Ethers.js Initialization Error: ${err.message}. Check RPC URL, Contract Address, and ABI in the code.`);
-            if (fetchDataBtn) fetchDataBtn.disabled = true;
-        }
-
-        // Add event listener to button
-        if (fetchDataBtn) {
-            fetchDataBtn.addEventListener('click', fetchData);
-        } else {
-            console.error("Fetch button not found!");
-        }
-
-        // Main data fetching function
-        async function fetchData() {
-            if (!contract) {
-                showError("Contract not initialized. Check console for initialization errors.");
-                return;
-            }
-
-            const peerId = peerIdInput.value.trim();
-            if (!peerId) {
-                showError("Please enter a Peer ID.");
-                return;
-            }
-            if (!peerId.startsWith('Qm') || peerId.length !== 46) {
-                showError("Invalid Peer ID format. It should start with 'Qm' and be 46 characters long.");
-                return;
-            }
-
-            // UI updates for loading state
-            loading.classList.remove('hidden');
-            dataDisplay.classList.add('hidden');
-            errorDisplay.classList.add('hidden');
+            showError(`Ошибка инициализации Ethers.js: ${err.message}`);
             fetchDataBtn.disabled = true;
-            fetchDataBtn.textContent = 'Loading...';
-            displayPeerIdEl.textContent = peerId; // Show which PeerID is being queried
+        }
 
-            // Clear previous results
-            eoaAddressEl.textContent = '-';
-            totalWinsEl.textContent = '-';
-            leaderboardRankEl.textContent = '-';
-            currentRoundEl.textContent = '-';
-            roundVotesEl.textContent = '-';
-            eoaVoteCountEl.textContent = '-';
-            uniquePeersEl.textContent = '-';
+        if (fetchDataBtn) fetchDataBtn.addEventListener('click', fetchData);
 
-            let fetchedEoaAddress = null; // Store fetched EOA address for later use
+        async function fetchData() {
+            if (!contract) { showError("Контракт не инициализирован."); return; }
+            const peerId = peerIdInput.value.trim();
+            if (!peerId) { showError("Пожалуйста, введите Peer ID."); return; }
+            if (!peerId.startsWith('Qm') || peerId.length !== 46) { showError("Неверный формат Peer ID."); return; }
+
+            loading.classList.remove('hidden'); dataDisplay.classList.add('hidden'); errorDisplay.classList.add('hidden');
+            fetchDataBtn.disabled = true; fetchDataBtn.textContent = 'Загрузка...';
 
             try {
-                console.log(`Fetching data for Peer ID: ${peerId}`);
+                displayPeerIdEl.textContent = peerId;
 
-                // --- Fetch all data concurrently ---
-                const [
-                    eoaResult,
-                    winsResult,
-                    roundResult,
-                    uniquePeersResult,
-                    leaderboardResult // Fetch leaderboard data
-                ] = await Promise.allSettled([
-                    contract.getEoa([peerId]),
-                    contract.getTotalWins(peerId),
-                    contract.currentRound(),
-                    contract.uniqueVotedPeers(),
-                    contract.winnerLeaderboard(0, 100) // Fetch top 100 winners
-                ]);
-
-                // --- Process results ---
-
-                // 1. EOA Address
-                if (eoaResult.status === 'fulfilled' && eoaResult.value && eoaResult.value.length > 0 && eoaResult.value[0] !== ethers.ZeroAddress) {
-                    fetchedEoaAddress = ethers.getAddress(eoaResult.value[0]); // Store checksummed address
-                    eoaAddressEl.textContent = fetchedEoaAddress;
-                    console.log("EOA result:", fetchedEoaAddress);
-                } else {
-                    eoaAddressEl.textContent = 'Not Found / Zero Address';
-                    if (eoaResult.status === 'rejected') console.error(`Error fetching EOA for ${peerId}:`, eoaResult.reason);
-                }
+                // 1. EOA
+                let eoaAddress = 'Не найден';
+                try {
+                    const addresses = await contract.getEoa([peerId]);
+                    if (addresses && addresses[0] !== ethers.ZeroAddress) eoaAddress = addresses[0];
+                } catch { }
+                eoaAddressEl.textContent = eoaAddress;
 
                 // 2. Total Wins
-                if (winsResult.status === 'fulfilled') {
-                    totalWinsEl.textContent = winsResult.value.toString();
-                    console.log(`Total wins for ${peerId}:`, winsResult.value.toString());
-                } else {
-                    totalWinsEl.textContent = 'Error';
-                    console.error(`Error fetching total wins for ${peerId}:`, winsResult.reason);
-                }
+                let totalWins = '-';
+                try { totalWins = (await contract.getTotalWins(peerId)).toString(); } catch { totalWins = 'Ошибка'; }
+                totalWinsEl.textContent = totalWins;
 
                 // 3. Current Round
-                let currentRoundNumber = null;
-                if (roundResult.status === 'fulfilled') {
-                    currentRoundNumber = roundResult.value; // Keep as BigInt for next call
-                    currentRoundEl.textContent = currentRoundNumber.toString();
-                    console.log("Current round:", currentRoundNumber.toString());
-                } else {
-                    currentRoundEl.textContent = 'Error';
-                    console.error("Error fetching current round:", roundResult.reason);
-                }
+                let roundNum = null, currentRound = '-';
+                try { roundNum = await contract.currentRound(); currentRound = roundNum.toString(); } catch { currentRound = 'Ошибка'; }
+                currentRoundEl.textContent = currentRound;
 
-                // 4. Votes in Current Round (requires currentRoundNumber)
-                if (currentRoundNumber !== null) {
-                    try {
-                        const votesBigInt = await contract.getPeerVoteCount(currentRoundNumber, peerId);
-                        roundVotesEl.textContent = votesBigInt.toString();
-                        console.log(`Votes in round ${currentRoundNumber.toString()} for ${peerId}:`, votesBigInt.toString());
-                    } catch (err) {
-                        roundVotesEl.textContent = 'Error';
-                        console.error(`Error fetching round votes for ${peerId} in round ${currentRoundNumber.toString()}:`, err);
-                    }
-                } else {
-                    roundVotesEl.textContent = 'N/A (Round Error)';
+                // 4. Round Votes
+                let roundVotes = '-';
+                if (roundNum !== null && typeof currentRound === 'string' && currentRound !== 'Ошибка') {
+                    try { roundVotes = (await contract.getPeerVoteCount(roundNum, peerId)).toString(); } catch { roundVotes = 'Ошибка'; }
+                } else if (currentRound === 'Ошибка') {
+                    roundVotes = 'Не удалось получить раунд';
                 }
+                roundVotesEl.textContent = roundVotes;
 
-                // 5. Total Votes Cast by EOA (requires fetchedEoaAddress)
-                if (fetchedEoaAddress && fetchedEoaAddress !== 'Not Found / Zero Address') {
-                    try {
-                        const eoaVotesBigInt = await contract.getVoterVoteCount(fetchedEoaAddress);
-                        eoaVoteCountEl.textContent = eoaVotesBigInt.toString();
-                        console.log(`Total votes cast by ${fetchedEoaAddress}:`, eoaVotesBigInt.toString());
-                    } catch (err) {
-                        eoaVoteCountEl.textContent = 'Error';
-                        console.error(`Error fetching EOA vote count for ${fetchedEoaAddress}:`, err);
-                    }
-                } else {
-                    eoaVoteCountEl.textContent = 'N/A (EOA not found)';
-                }
+                // 5. Unique Peers
+                let uniquePeers = '-';
+                try { uniquePeers = (await contract.uniqueVotedPeers()).toString(); } catch { uniquePeers = 'Ошибка'; }
+                uniquePeersEl.textContent = uniquePeers;
 
-                // 6. Unique Voted Peers
-                if (uniquePeersResult.status === 'fulfilled') {
-                    uniquePeersEl.textContent = uniquePeersResult.value.toString();
-                    console.log("Unique voted peers:", uniquePeersResult.value.toString());
-                } else {
-                    uniquePeersEl.textContent = 'Error';
-                    console.error("Error fetching unique peers:", uniquePeersResult.reason);
-                }
-
-                // 7. Leaderboard Rank
-                if (leaderboardResult.status === 'fulfilled') {
-                    const [leaderboardPeerIds, leaderboardWins] = leaderboardResult.value;
-                    const rankIndex = leaderboardPeerIds.findIndex(id => id === peerId);
-                    if (rankIndex !== -1) {
-                        leaderboardRankEl.textContent = `#${rankIndex + 1} (with ${leaderboardWins[rankIndex].toString()} wins)`;
-                    } else {
-                        leaderboardRankEl.textContent = 'Not in Top 100';
-                    }
-                    console.log("Leaderboard fetched successfully.");
-                } else {
-                    leaderboardRankEl.textContent = 'Error fetching leaderboard';
-                    console.error("Error fetching winner leaderboard:", leaderboardResult.reason);
-                }
-
-                // Show data block
                 dataDisplay.classList.remove('hidden');
 
             } catch (error) {
-                // Catch any general error not caught by Promise.allSettled
-                console.error("General error during data fetch:", error);
-                showError(`Failed to fetch data. Error: ${error.message}. Check browser console.`);
+                console.error("General error:", error);
+                showError(`Не удалось получить данные. Ошибка: ${error.message}`);
             } finally {
-                // Restore UI after loading
-                loading.classList.add('hidden');
-                fetchDataBtn.disabled = false;
-                fetchDataBtn.textContent = 'Fetch Data';
+                loading.classList.add('hidden'); fetchDataBtn.disabled = false; fetchDataBtn.textContent = 'Получить данные';
             }
         }
 
-        // Helper function to display errors
-        function showError(message) {
-            errorDisplay.textContent = message;
-            errorDisplay.classList.remove('hidden');
-            dataDisplay.classList.add('hidden'); // Hide data on error
+        function showError(msg) {
+            errorDisplay.textContent = msg; errorDisplay.classList.remove('hidden'); dataDisplay.classList.add('hidden');
         }
 
-        // Initial check on page load
         document.addEventListener('DOMContentLoaded', () => {
             if (!provider || !contract) {
-                showError("Ethers.js Initialization Error on page load. Check RPC URL, Contract Address, and ABI in the code.");
-                if (fetchDataBtn) fetchDataBtn.disabled = true;
-            } else {
-                console.log("Ethers.js initialized on page load.");
+                showError("Ошибка инициализации при загрузке страницы.");
+                fetchDataBtn.disabled = true;
             }
         });
-
     </script>
 
 </body>
